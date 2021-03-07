@@ -19,6 +19,7 @@
 #define Sig0(x) ROTR(x,7)^ROTR(x,18)^SHR(x,3)
 #define Sig1(x) ROTR(x,17)^ROTR(x,19)^SHR(x,10)
 
+// Section 4.2.2
 const WORD K[] = {
     0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5,
     0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
@@ -36,6 +37,12 @@ const WORD K[] = {
     0x391c0cb3, 0x4ed8aa4a, 0x5b9cca4f, 0x682e6ff3,
     0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208,
     0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2
+};
+
+// Section 5.3.4
+WORD H[] = {
+    0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a,
+    0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19
 };
 
 int main(int argc, char *argv[]) {
