@@ -1,24 +1,31 @@
 #include <stdio.h>
 #include <inttypes.h>
 
+// Endianess. Adapted from:
+//   https://developer.ibm.com/technologies/systems/articles/au-endianc/
+#include <byteswap.h>
+const int _i = 1;
+#define islilend() ((*(char*)&_i) != 0)
+
+
 // Words and bytes.
 #define WORD uint32_t
 #define PF PRIx32
 #define BYTE uint8_t
 
 // Page 5 of the secure hash standard.
-#define ROTL(_x,_n) (_x << _n) | (_x >> ((sizeof(_x)*8) - _n))
-#define ROTR(_x,_n) (_x >> _n) | (_x << ((sizeof(_x)*8) - _n))
-#define SHR(_x,_n) _x >> _n
+#define ROTL(_x,_n) ((_x << _n) | (_x >> ((sizeof(_x)*8) - _n)))
+#define ROTR(_x,_n) ((_x >> _n) | (_x << ((sizeof(_x)*8) - _n)))
+#define SHR(_x,_n) (_x >> _n)
 
 // Page 10 of the secure hash standard.
-#define CH(_x,_y,_z) (_x & _y) ^ (~_x & _z)
-#define MAJ(_x,_y,_z) (_x & _y) ^ (_x & _z) ^ (_y & _z)
+#define CH(_x,_y,_z) ((_x & _y) ^ (~_x & _z))
+#define MAJ(_x,_y,_z) ((_x & _y) ^ (_x & _z) ^ (_y & _z))
 
-#define SIG0(_x) ROTR(_x,2)  ^ ROTR(_x,13) ^ ROTR(_x,22)
-#define SIG1(_x) ROTR(_x,6)  ^ ROTR(_x,11) ^ ROTR(_x,25)
-#define Sig0(_x) ROTR(_x,7)  ^ ROTR(_x,18) ^ SHR(_x,3)
-#define Sig1(_x) ROTR(_x,17) ^ ROTR(_x,19) ^ SHR(_x,10)
+#define SIG0(_x) (ROTR(_x,2)  ^ ROTR(_x,13) ^ ROTR(_x,22))
+#define SIG1(_x) (ROTR(_x,6)  ^ ROTR(_x,11) ^ ROTR(_x,25))
+#define Sig0(_x) (ROTR(_x,7)  ^ ROTR(_x,18) ^ SHR(_x,3))
+#define Sig1(_x) (ROTR(_x,17) ^ ROTR(_x,19) ^ SHR(_x,10))
 
 
 // SHA256 works on blocks of 512 bits.
@@ -84,7 +91,7 @@ int next_block(FILE *f, union Block *M, enum Status *S, uint64_t *nobits) {
                 M->bytes[nobytes] = 0x00; // In bits: 00000000
             }
             // Append nobits as a big endian integer.
-            M->sixf[7] = *nobits;
+            M->sixf[7] = (islilend() ? bswap_64(*nobits) : *nobits);
             // Say this is the last block.
             *S = END;
         } else {
@@ -106,10 +113,15 @@ int next_block(FILE *f, union Block *M, enum Status *S, uint64_t *nobits) {
             M->bytes[nobytes] = 0x00; // In bits: 00000000
         }
         // Append nobits as a big endian integer.
-        M->sixf[7] = *nobits;
+        M->sixf[7] = (islilend() ? bswap_64(*nobits) : *nobits);
         // Change the status to END.
         *S = END;
     }
+
+    // Swap the byte order of the words if we're little endian.
+    if (islilend())
+        for (int i = 0; i < 16; i++)
+            M->words[i] = bswap_32(M->words[i]);
 
     return 1;
 }
@@ -117,7 +129,6 @@ int next_block(FILE *f, union Block *M, enum Status *S, uint64_t *nobits) {
 
 int next_hash(union Block *M, WORD H[]) {
   
-    WORD Y = 0xffffffff;
     // Message schedule, Section 6.2.2
     WORD W[64];
     // Iterator.

@@ -6,7 +6,6 @@
 #define PF PRIx32
 #define BYTE uint8_t
 
-
 // SHA256 works on blocks of 512 bits.
 union Block {
     // 8 x 64 = 512 - dealing with block as bytes.
@@ -19,8 +18,8 @@ union Block {
 
 
 int update(union Block *M) {
-    for (int i = 0; i < 64; i++)
-        M->bytes[i] = M->bytes[i] + 1;
+    for (int i = 0; i < 16; i++)
+        M->words[i] = M->words[i] + 1;
     return 0;
 }
 
@@ -31,25 +30,24 @@ int main(int argc, char *argv) {
     for (i = 0; i < 64; i++)
         M.bytes[i] = i;
     
-
     for (i = 0; i < 64; i++)
-        printf("%i,", M.bytes[i]);
+        printf("%02x,", M.bytes[i]);
     printf("\n");    
-        
+    
     for (i = 0; i < 16; i++)
-        printf("%i,", M.words[i]);
-    printf("\n");
+        printf("%08" PF ",", M.words[i]);
+    printf("\n\n");
 
     
     for (j = 0; j < 3; j++) {
         update(&M);
         for (i = 0; i < 64; i++)
-            printf("%i,", M.bytes[i]);
+            printf("%02x,", M.bytes[i]);
         printf("\n");    
         
         for (i = 0; i < 16; i++)
-            printf("%i,", M.words[i]);
-        printf("\n");
+            printf("%08" PF ",", M.words[i]);
+        printf("\n\n");
     
     }
 
