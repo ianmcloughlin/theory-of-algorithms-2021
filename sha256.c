@@ -6,7 +6,7 @@
 #include <byteswap.h>
 const int _i = 1;
 #define islilend() ((*(char*)&_i) != 0)
-
+ 
 
 // Words and bytes.
 #define WORD uint32_t
